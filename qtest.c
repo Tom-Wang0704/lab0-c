@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include "dudect/fixture.h"
 #include "list.h"
+#include "list_sort.h"
 
 /* Our program needs to use regular malloc/free */
 #define INTERNAL 1
@@ -69,6 +70,9 @@ static int string_length = MAXSTRING;
 #define MIN_RANDSTR_LEN 5
 #define MAX_RANDSTR_LEN 10
 static const char charset[] = "abcdefghijklmnopqrstuvwxyz";
+
+// To change the sort mode
+static bool SWITCH_SORT = true;
 
 /* Forward declarations */
 static bool show_queue(int vlevel);
@@ -641,6 +645,37 @@ static bool do_size(int argc, char *argv[])
     return ok && !error_check();
 }
 
+bool do_switchsort(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    if (!l_meta.l)
+        report(3, "Warning: Try to access null queue");
+    error_check();
+
+    if (SWITCH_SORT) {
+        report(3, "Change list_sort to q_sort");
+        SWITCH_SORT = !SWITCH_SORT;
+        return SWITCH_SORT;
+    } else {
+        report(3, "Change q_sort to list_sort");
+        SWITCH_SORT = !SWITCH_SORT;
+        return SWITCH_SORT;
+    }
+}
+
+__attribute__((nonnull(2, 3))) int cmp(void *priv,
+                                       const struct list_head *list1,
+                                       const struct list_head *list2)
+{
+    element_t *node1 = list_entry(list1, element_t, list);
+    element_t *node2 = list_entry(list2, element_t, list);
+    return strcmp(node1->value, node2->value) < 0 ? 0 : 1;
+}
+
 bool do_sort(int argc, char *argv[])
 {
     if (argc != 1) {
@@ -658,8 +693,15 @@ bool do_sort(int argc, char *argv[])
     error_check();
 
     set_noallocate_mode(true);
-    if (exception_setup(true))
-        q_sort(l_meta.l);
+    if (exception_setup(true)) {
+        if (SWITCH_SORT == true) {
+            report(3, "Using the list_sort");
+            list_sort(NULL, l_meta.l, cmp);
+        } else {
+            report(3, "Using the q_sort");
+            q_sort(l_meta.l);
+        }
+    }
     exception_cancel();
     set_noallocate_mode(false);
 
@@ -840,6 +882,8 @@ static void console_init()
         dedup, "                | Delete all nodes that have duplicate string");
     ADD_COMMAND(swap,
                 "                | Swap every two adjacent nodes in queue");
+    ADD_COMMAND(switchsort,
+                "        | Switch the sorting method of list_sort and q_sort");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
     add_param("malloc", &fail_probability, "Malloc failure probability percent",
