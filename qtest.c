@@ -726,6 +726,46 @@ bool do_sort(int argc, char *argv[])
     return ok && !error_check();
 }
 
+static bool q_shuffle(struct list_head *head)
+{
+    if (!head || list_empty(head))
+        return false;
+
+    int size = q_size(head);
+    for (; size > 0; size--) {
+        struct list_head *temp = head->next;
+        int number = rand() % size;
+        for (int i = 0; i < number; i++)
+            temp = temp->next;
+        list_del(temp);
+        list_add_tail(temp, head);
+    }
+
+    return true;
+}
+
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+
+    if (!l_meta.l)
+        report(3, "Warning: Try to access null queue");
+    error_check();
+
+    bool ok = true;
+    set_noallocate_mode(true);
+    if (exception_setup(true))
+        ok = q_shuffle(l_meta.l);
+    exception_cancel();
+    set_noallocate_mode(false);
+
+    show_queue(3);
+    return ok && !error_check();
+}
+
 static bool do_dm(int argc, char *argv[])
 {
     if (argc != 1) {
@@ -882,6 +922,9 @@ static void console_init()
         dedup, "                | Delete all nodes that have duplicate string");
     ADD_COMMAND(swap,
                 "                | Swap every two adjacent nodes in queue");
+    ADD_COMMAND(
+        shuffle,
+        "                | Shuffle the queue by using Fisher-Yates shuffle");
     ADD_COMMAND(switchsort,
                 "        | Switch the sorting method of list_sort and q_sort");
     add_param("length", &string_length, "Maximum length of displayed string",
