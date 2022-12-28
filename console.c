@@ -586,6 +586,7 @@ bool finish_cmd()
     bool ok = true;
     if (!quit_flag)
         ok = ok && do_quit(0, NULL);
+    linenoiseAtExit();
     has_infile = false;
     return ok && err_cnt == 0;
 }
