@@ -143,8 +143,8 @@ bool q_delete_mid(struct list_head *head)
     }
 
     list_del(ptr);
-    element_t *entry = list_entry(ptr, element_t, list);
-    q_release_element(entry);
+    element_t *node = list_entry(ptr, element_t, list);
+    q_release_element(node);
     return true;
 }
 

@@ -51,7 +51,7 @@ static bool noallocate_mode = false;
 static bool error_occurred = false;
 static char *error_message = "";
 
-static int time_limit = 1;
+static int time_limit = 5;
 
 /* Data for managing exceptions */
 static jmp_buf env;
